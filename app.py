@@ -21,14 +21,21 @@ def get_video_url():
             return jsonify({'error': 'URL is required'}), 400
         
         ydl_opts = {
-            'format': 'best' if quality == 'high' else 'worst',
+            'format': 'best[ext=mp4]/best' if quality == 'high' else 'worst[ext=mp4]/worst',
             'noplaylist': True,
             'quiet': True,
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
+            
             video_url = info.get('url')
+            if not video_url and info.get('formats'):
+                for f in reversed(info['formats']):
+                    if f.get('url'):
+                        video_url = f['url']
+                        break
+            
             title = info.get('title', 'video')
             thumbnail = info.get('thumbnail', '')
             ext = info.get('ext', 'mp4')
